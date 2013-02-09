@@ -1,0 +1,42 @@
+Version 1.7
+    * change license to LGPL v3
+    * change plugin sign in hooks  
+    * code cleanup      
+
+
+
+Version 1.6
+    * better fix in moderators list (works with files cache now)
+
+
+
+Version 1.5
+    * small fix in moderators list
+
+
+
+Version 1.4
+    * add new cache method
+    * remove old cache methods and plugin settings
+    * add style usernames on moderators list in forumlist
+
+
+
+Version 1.3
+    * add compatibility with MyBB 1.6.5
+
+
+
+Version 1.2
+    * fix in method for styling usernames in announcements
+
+
+
+Version 1.1
+    * minor fix in methods
+    * add method for manualy get username style ( styleUsernames::forumdisplayThread(int uid) )
+
+
+
+Version 1.0
+    * first version
