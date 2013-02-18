@@ -78,14 +78,14 @@ class styleUsernames
     {
         global $plugins;
 
-        $plugins->hooks["global_end"][10]["su_getModerators"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->getModerators();'));
-        $plugins->hooks["pre_output_page"][10]["su_parseUsernames"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->parseUsernames($arg);'));
-        $plugins->hooks["build_forumbits_forum"][10]["su_buildForumbits"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->buildForumbits($arg);'));
-        $plugins->hooks["forumdisplay_announcement"][10]["su_forumdisplayAnnouncement"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->forumdisplayAnnouncement();'));
-        $plugins->hooks["forumdisplay_thread"][10]["su_forumdisplayThread"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->forumdisplayThread();'));
-        $plugins->hooks["search_results_thread"][10]["su_searchThread"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->searchThread();'));
-        $plugins->hooks["search_results_post"][10]["su_searchPost"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->searchPost();'));
-        $plugins->hooks["pre_output_page"][10]["su_pluginThanks"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->pluginThanks($arg);'));
+        $plugins->hooks["global_end"][10]["styleUsernames_getModerators"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->getModerators();'));
+        $plugins->hooks["pre_output_page"][10]["styleUsernames_parseUsernames"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->parseUsernames($arg);'));
+        $plugins->hooks["build_forumbits_forum"][10]["styleUsernames_buildForumbits"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->buildForumbits($arg);'));
+        $plugins->hooks["forumdisplay_announcement"][10]["styleUsernames_forumdisplayAnnouncement"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->forumdisplayAnnouncement();'));
+        $plugins->hooks["forumdisplay_thread"][10]["styleUsernames_forumdisplayThread"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->forumdisplayThread();'));
+        $plugins->hooks["search_results_thread"][10]["styleUsernames_searchThread"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->searchThread();'));
+        $plugins->hooks["search_results_post"][10]["styleUsernames_searchPost"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->searchPost();'));
+        $plugins->hooks["pre_output_page"][10]["styleUsernames_pluginThanks"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->pluginThanks($arg);'));
     }
 
     /**
@@ -269,8 +269,8 @@ class styleUsernames
     
     /**
      * Say thanks to plugin author - paste link to author website.
-     * If you didn't make donate, don't remove this code
-     * otherwise you're breaking the license     
+     * Please don't remove this code if you didn't make donate
+     * It's the only way to say thanks without donate :)     
      */
     public function pluginThanks(&$content)
     {
