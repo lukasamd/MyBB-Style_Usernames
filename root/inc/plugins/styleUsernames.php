@@ -53,7 +53,7 @@ function styleUsernames_info()
         'website' => 'http://lukasztkacz.com',
         'author' => 'Lukasz "LukasAMD" Tkacz',
         'authorsite' => 'http://lukasztkacz.com',
-        'version' => '1.7',
+        'version' => '1.8',
         'guid' => '6f0320c2e4b0f78792dd626a60ea33d1',
         'compatibility' => '16*'
     );
@@ -206,8 +206,8 @@ class styleUsernames
         global $announcement;
 
         $this->cache['users'][$announcement['uid']] = $announcement['username'];
-        $sign = "#STYLE_USERNAMES_UID{$announcement['uid']}#";
-        $announcement['profilelink'] = str_replace($announcement['username'], $sign, $announcement['profilelink']);
+        $sign = ">#STYLE_USERNAMES_UID{$announcement['uid']}#<";
+        $announcement['profilelink'] = str_replace(">{$announcement['username']}<", $sign, $announcement['profilelink']);
     }
 
     /**

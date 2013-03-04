@@ -1,3 +1,8 @@
+Version 1.8
+    * fix announcements compatibility with Google SEO (by Kretol)     
+
+
+
 Version 1.7
     * change license to LGPL v3
     * change plugin sign in hooks  
