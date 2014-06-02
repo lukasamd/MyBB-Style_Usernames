@@ -1,3 +1,8 @@
+Version 1.9
+    * add style usernames on guests     
+
+
+
 Version 1.8
     * fix announcements compatibility with Google SEO (by Kretol)     
 

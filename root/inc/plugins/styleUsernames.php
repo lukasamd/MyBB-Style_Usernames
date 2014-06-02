@@ -1,7 +1,7 @@
 <?php
 /**
  * This file is part of Style Usernames plugin for MyBB.
- * Copyright (C) 2010-2013 Lukasz Tkacz <lukasamd@gmail.com>
+ * Copyright (C) Lukasz Tkacz <lukasamd@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -53,8 +53,8 @@ function styleUsernames_info()
         'website' => 'http://lukasztkacz.com',
         'author' => 'Lukasz "LukasAMD" Tkacz',
         'authorsite' => 'http://lukasztkacz.com',
-        'version' => '1.8',
-        'guid' => '6f0320c2e4b0f78792dd626a60ea33d1',
+        'version' => '1.9',
+        'guid' => '41774fae308e349a1da79dd47a50a3a5',
         'compatibility' => '16*'
     );
 }
@@ -134,6 +134,7 @@ class styleUsernames
 
         // Parse users
         $this->cache['users'] = array_unique($this->cache['users']);
+        $this->cache['guests'] = array_unique($this->cache['guests']);
         $this->cache['mods'] = array_unique($this->cache['mods']);
 
         if (sizeof($this->cache['users']))
@@ -159,15 +160,28 @@ class styleUsernames
             }
 
             // Clean output for bad (non-isset) usernames
-            if (sizeof($this->cache['users']))
+            if (isset($fdata['users']))
             {
-                foreach ($this->cache['users'] as $uid => $username)
+                foreach ($fdata['users'] as $uid => $udata)
                 {
-                    $sign = "#STYLE_USERNAMES_UID{$uid}#";
-                    $content = str_replace($sign, $username, $content);
+                    $cache->cache['moderators'][$fid]['users'][$uid]['username'] = "#STYLE_USERNAMES_UID{$uid}#";
+                    $this->cache['users'][$uid] = $udata['username'];
+                    $this->cache['mods'][] = $uid;
                 }
             }
         }
+        
+        // Parse guests
+        if (sizeof($this->cache['guests']))
+        {
+            foreach ($this->cache['guests'] as $username)
+            {
+                $sign = "#STYLE_USERNAMES_UID{$username}#";
+                $username = format_name($username, 1, 1);
+                $content = str_replace($sign, $username, $content);
+            }
+        }
+        
 
         // Parse moderator groups
         $this->cache['groups'] = array_unique($this->cache['groups']);
@@ -194,8 +208,16 @@ class styleUsernames
      */
     public function buildForumbits(&$forum)
     {
-        $this->cache['users'][$forum['lastposteruid']] = $forum['lastposter'];
-        $forum['lastposter'] = "#STYLE_USERNAMES_UID{$forum['lastposteruid']}#";
+        if ($thread['lastposteruid'] != 0)
+        {
+            $this->cache['users'][$forum['lastposteruid']] = $forum['lastposter'];
+            $forum['lastposter'] = "#STYLE_USERNAMES_UID{$forum['lastposteruid']}#";
+        }
+        else
+        {
+            $this->cache['guests'][] = $forum['lastposter'];
+            $forum['lastposter'] = "#STYLE_USERNAMES_UID{$forum['lastposter']}#";
+        }
     }
 
     /**
@@ -216,17 +238,27 @@ class styleUsernames
     public function forumdisplayThread()
     {
         global $thread;
-
+        
         if ($thread['username'])
         {
             $this->cache['users'][$thread['uid']] = $thread['username'];
             $thread['username'] = "#STYLE_USERNAMES_UID{$thread['uid']}#";
+        }
+        else
+        {
+            $this->cache['guests'][] = $thread['threadusername'];
+            $thread['username'] = "#STYLE_USERNAMES_UID{$thread['threadusername']}#";
         }
 
         if ($thread['lastposteruid'] != 0)
         {
             $this->cache['users'][$thread['lastposteruid']] = $thread['lastposter'];
             $thread['lastposter'] = "#STYLE_USERNAMES_UID{$thread['lastposteruid']}#";
+        }
+        else
+        {
+            $this->cache['guests'][] = $thread['lastposter'];
+            $thread['lastposter'] = "#STYLE_USERNAMES_UID{$thread['lastposter']}#";
         }
     }
 
@@ -239,16 +271,32 @@ class styleUsernames
 
         if ($thread['username'])
         {
-            $this->cache['users'][$thread['uid']] = $thread['username'];
-            $sign = ">#STYLE_USERNAMES_UID{$thread['uid']}#<";
-            $thread['profilelink'] = str_replace(">{$thread['username']}<", $sign, $thread['profilelink']);
+            if ($thread['uid'] != 0)
+            {
+                echo 'aaa';
+                $this->cache['users'][$thread['uid']] = $thread['username'];
+                $sign = ">#STYLE_USERNAMES_UID{$thread['uid']}#<";
+                $thread['profilelink'] = str_replace(">{$thread['username']}<", $sign, $thread['profilelink']);
+            }
+            else
+            {
+                $this->cache['guests'][] = $thread['username'];
+                $thread['profilelink'] = "#STYLE_USERNAMES_UID{$thread['username']}#";
+            }
+
         }
+
 
         if ($thread['lastposteruid'] != 0)
         {
             $this->cache['users'][$thread['lastposteruid']] = $thread['lastposter'];
             $sign = ">#STYLE_USERNAMES_UID{$thread['lastposteruid']}#<";
             $lastposterlink = str_replace(">{$thread['lastposter']}<", $sign, $lastposterlink);
+        }
+        else
+        {
+            $this->cache['guests'][] = $thread['lastposter'];
+            $lastposterlink = "#STYLE_USERNAMES_UID{$thread['lastposter']}#";
         }
     }
 
@@ -264,6 +312,11 @@ class styleUsernames
             $this->cache['users'][$post['uid']] = $post['username'];
             $sign = ">#STYLE_USERNAMES_UID{$post['uid']}#<";
             $post['profilelink'] = str_replace(">{$post['username']}<", $sign, $post['profilelink']);
+        }
+        else
+        {
+            $this->cache['guests'][] = $post['username'];
+            $post['profilelink'] = "#STYLE_USERNAMES_UID{$post['username']}#"; 
         }
     }
     
