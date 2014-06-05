@@ -69,6 +69,7 @@ class styleUsernames
         'groups' => array(),
         'mods' => array(),
         'users' => array(),
+        'guests' => array(),
     );
 
     /**
