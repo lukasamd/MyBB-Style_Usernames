@@ -274,7 +274,6 @@ class styleUsernames
         {
             if ($thread['uid'] != 0)
             {
-                echo 'aaa';
                 $this->cache['users'][$thread['uid']] = $thread['username'];
                 $sign = ">#STYLE_USERNAMES_UID{$thread['uid']}#<";
                 $thread['profilelink'] = str_replace(">{$thread['username']}<", $sign, $thread['profilelink']);
