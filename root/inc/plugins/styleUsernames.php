@@ -53,7 +53,7 @@ function styleUsernames_info()
         'website' => 'http://lukasztkacz.com',
         'author' => 'Lukasz "LukasAMD" Tkacz',
         'authorsite' => 'http://lukasztkacz.com',
-        'version' => '1.9',
+        'version' => '20',
         'guid' => '41774fae308e349a1da79dd47a50a3a5',
         'compatibility' => '16*'
     );
@@ -209,7 +209,7 @@ class styleUsernames
      */
     public function buildForumbits(&$forum)
     {
-        if ($thread['lastposteruid'] != 0)
+        if ($forum['lastposteruid'] != 0)
         {
             $this->cache['users'][$forum['lastposteruid']] = $forum['lastposter'];
             $forum['lastposter'] = "#STYLE_USERNAMES_UID{$forum['lastposteruid']}#";

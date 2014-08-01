@@ -18,5 +18,5 @@
  *
  */
 
-$l['styleUsernamesName'] = 'Style Usernames';
+$l['styleUsernamesName'] = 'Style Usernames (MyBB 1.6)';
 $l['styleUsernamesDesc'] = 'This plugin colorize usernames according to the groups settings.';

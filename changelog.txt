@@ -1,3 +1,10 @@
+Version 20
+    * fix lastposter issue
+    * change version system
+    * rename to MyBB 1.6 plugin             
+
+
+
 Version 1.9
     * add style usernames on guests     
 
