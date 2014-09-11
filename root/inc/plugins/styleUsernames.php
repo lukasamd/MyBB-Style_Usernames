@@ -53,9 +53,9 @@ function styleUsernames_info()
         'website' => 'http://lukasztkacz.com',
         'author' => 'Lukasz "LukasAMD" Tkacz',
         'authorsite' => 'http://lukasztkacz.com',
-        'version' => '20',
-        'guid' => '41774fae308e349a1da79dd47a50a3a5',
-        'compatibility' => '16*'
+        'version' => '1.0.0',
+        'guid' => '',
+        'compatibility' => '18*'
     );
 }
 

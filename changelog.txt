@@ -1,3 +1,8 @@
+Version 1.0.0
+    * First version for MyBB 1.8            
+
+
+
 Version 20
     * fix lastposter issue
     * change version system
