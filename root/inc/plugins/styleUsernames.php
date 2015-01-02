@@ -55,7 +55,8 @@ function styleUsernames_info()
         'authorsite' => 'http://lukasztkacz.com',
         'version' => '1.0.0',
         'guid' => '',
-        'compatibility' => '18*'
+        'compatibility' => '18*',
+        'codename' => 'style_usernames'
     );
 }
 
