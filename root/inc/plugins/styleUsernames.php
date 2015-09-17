@@ -52,8 +52,8 @@ function styleUsernames_info()
         'description' => $lang->styleUsernamesDesc,
         'website' => 'http://lukasztkacz.com',
         'author' => 'Lukasz "LukasAMD" Tkacz',
-        'authorsite' => 'http://lukasztkacz.com',
-        'version' => '1.0.0',
+        'authorsite' => 'https://lukasztkacz.com',
+        'version' => '1.1.0',
         'guid' => '',
         'compatibility' => '18*',
         'codename' => 'style_usernames'
@@ -80,15 +80,18 @@ class styleUsernames
     {
         global $plugins;
 
-        $plugins->hooks["global_end"][10]["styleUsernames_getModerators"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->getModerators();'));
         $plugins->hooks["pre_output_page"][10]["styleUsernames_parseUsernames"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->parseUsernames($arg);'));
+        $plugins->hooks["global_end"][10]["styleUsernames_getModerators"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->getModerators();'));
         $plugins->hooks["build_forumbits_forum"][10]["styleUsernames_buildForumbits"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->buildForumbits($arg);'));
         $plugins->hooks["forumdisplay_announcement"][10]["styleUsernames_forumdisplayAnnouncement"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->forumdisplayAnnouncement();'));
         $plugins->hooks["forumdisplay_thread"][10]["styleUsernames_forumdisplayThread"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->forumdisplayThread();'));
         $plugins->hooks["search_results_thread"][10]["styleUsernames_searchThread"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->searchThread();'));
         $plugins->hooks["search_results_post"][10]["styleUsernames_searchPost"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->searchPost();'));
+        $plugins->hooks["private_message"][10]["styleUsernames_privateMessage"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->privateMessage();'));
+        $plugins->hooks["portal_announcement"][10]["styleUsernames_portalAnnouncement"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->portalAnnouncement();'));
         $plugins->hooks["pre_output_page"][10]["styleUsernames_pluginThanks"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->pluginThanks($arg);'));
     }
+    
 
     /**
      * Change moderators usernames to Style Usernames code and get their ids.
@@ -133,7 +136,7 @@ class styleUsernames
     public function parseUsernames(&$content)
     {
         global $db, $cache;
-
+                           
         // Parse users
         $this->cache['users'] = array_unique($this->cache['users']);
         $this->cache['guests'] = array_unique($this->cache['guests']);
@@ -322,6 +325,34 @@ class styleUsernames
     }
     
     /**
+     * Style usernames on PM lists
+     */
+    public function privateMessage()
+    {
+        global $tofromusername, $tofromuid;
+        
+        if ($tofromuid != 0)
+        {
+            $this->cache['users'][$tofromuid] = $tofromusername;
+            $tofromusername = "#STYLE_USERNAMES_UID{$tofromuid}#";
+        }
+    }
+    
+    /**
+     * Style usernames on portal announcements 
+     */
+    public function portalAnnouncement()
+    {
+        global $profilelink, $announcement;
+        
+        if ($announcement['uid'])
+        {
+            $this->cache['users'][$announcement['uid']] = $announcement['username'];
+            $profilelink = "#STYLE_USERNAMES_UID{$announcement['uid']}#";
+        }
+    } 
+    
+    /**
      * Say thanks to plugin author - paste link to author website.
      * Please don't remove this code if you didn't make donate
      * It's the only way to say thanks without donate :)     
@@ -332,7 +363,7 @@ class styleUsernames
         
         if (!isset($lukasamd_thanks) && $session->is_spider)
         {
-            $thx = '<div style="margin:auto; text-align:center;">This forum uses <a href="http://lukasztkacz.com">Lukasz Tkacz</a> MyBB addons.</div></body>';
+            $thx = '<div style="margin:auto; text-align:center;">This forum uses <a href="https://lukasztkacz.com">Lukasz Tkacz</a> MyBB addons.</div></body>';
             $content = str_replace('</body>', $thx, $content);
             $lukasamd_thanks = true;
         }
