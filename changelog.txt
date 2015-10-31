@@ -1,3 +1,9 @@
+Version 1.2.0
+    * Rewrite code to full style
+    * Add Plugin Library functions
+
+
+
 Version 1.0.0
     * First version for MyBB 1.8            
 

@@ -29,4 +29,7 @@ INSTALLATION:
 
 1. Upload all files from "root" directory to your mybb installation on the server
 
+2. Download and upload Plugin Library:
+http://mods.mybb.com/view/pluginlibrary
+
 2. Go to ACP -> Plugins and activate "Style Usernames" plugin

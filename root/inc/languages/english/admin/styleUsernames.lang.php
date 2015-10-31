@@ -18,5 +18,14 @@
  *
  */
 
-$l['styleUsernamesName'] = 'Style Usernames (MyBB 1.6)';
+$l['styleUsernamesName'] = 'Style Usernames';
 $l['styleUsernamesDesc'] = 'This plugin colorize usernames according to the groups settings.';
+
+$l['styleUsernamesEditFail'] = 'Whoops, you moust modify MyBB files :(';
+$l['styleUsernamesEditFailLink'] = 'Click to modify files';
+
+$l['styleUsernamesEditOk'] = 'Everything is ok :)';
+$l['styleUsernamesEditOkLink'] = 'Undo changes in files';
+
+$l['styleUsernamesFileOk'] = 'File %s has been modified.';
+$l['styleUsernamesFileFail'] = 'Whoops, file %s has been not modified. Check file CHMOD.';

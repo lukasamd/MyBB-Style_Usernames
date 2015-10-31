@@ -9,3 +9,4 @@ It can format nicknames in:
 * topic author in search results
 * last posts author in search results
 * announcements author
+* etc

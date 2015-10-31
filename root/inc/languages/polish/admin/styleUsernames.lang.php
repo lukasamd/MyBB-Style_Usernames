@@ -18,5 +18,14 @@
  *
  */
 
-$l['styleUsernamesName'] = 'Kolorowe nicki (MyBB 1.6)';
+$l['styleUsernamesName'] = 'Kolorowe nicki';
 $l['styleUsernamesDesc'] = 'Ten plugin koloryzuje nicki wyświetlane na forum zgodnie z ustawieniami grup.';
+
+$l['styleUsernamesEditFail'] = 'Ups, najpierw trzeba zmodyfikować pliki forum :(';
+$l['styleUsernamesEditFailLink'] = 'Zmodyfikuj pliki MyBB';
+
+$l['styleUsernamesEditOk'] = 'Wszystko wygląda dobrze :)';
+$l['styleUsernamesEditOkLink'] = 'Wycofaj zmiany w plikach MyBB';
+
+$l['styleUsernamesFileOk'] = 'Plik %s został prawidłowo zmodyfikowany.';
+$l['styleUsernamesFileFail'] = 'Ups, plik %s nie został zmodyfikowany. Sprawdź ustawienia CHMOD.';

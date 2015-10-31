@@ -29,7 +29,10 @@ INSTALACJA:
 
 1. Umieść wszystkie pliki z katalogu root na serwerze w katalogu z forum MyBB
 
-2. Wejdź do Panelu Administracyjnego -> Pluginy i zainstaluj "Kolorowe nicki"
+2. Umieść na serwerze pliki dodatku Plugin Library
+http://mods.mybb.com/view/pluginlibrary
+
+3. Wejdź do Panelu Administracyjnego -> Pluginy i aktywuj "Kolorowe nicki"
 
 
 
