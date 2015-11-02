@@ -53,7 +53,7 @@ function styleUsernames_info()
         'website' => 'http://lukasztkacz.com',
         'author' => 'Lukasz "LukasAMD" Tkacz',
         'authorsite' => 'https://lukasztkacz.com',
-        'version' => '1.1.0',
+        'version' => '1.3.0',
         'guid' => '',
         'compatibility' => '18*',
         'codename' => 'style_usernames'
