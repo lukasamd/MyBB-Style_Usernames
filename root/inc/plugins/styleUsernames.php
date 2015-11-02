@@ -63,8 +63,13 @@ function styleUsernames_info()
         'description' => $lang->styleUsernamesDesc,
         'website' => 'https://lukasztkacz.com',
         'author' => 'Lukasz "LukasAMD" Tkacz',
+<<<<<<< HEAD
         'authorsite' => 'https://lukasztkacz.com',
         'version' => '1.2.0',
+=======
+        'authorsite' => 'http://lukasztkacz.com',
+        'version' => '1.0.0',
+>>>>>>> parent of e65e44c... Version 1.1.0
         'guid' => '',
         'compatibility' => '18*',
         'codename' => 'style_usernames'
@@ -135,6 +140,7 @@ class styleUsernames
      */
     public static function admin()
     {
+<<<<<<< HEAD
         global $mybb, $lang;
         $lang->load("styleUsernames");
     
@@ -198,6 +204,19 @@ class styleUsernames
     {
         self::$cache['users'][$uid] = $username; 
     }    
+=======
+        global $plugins;
+
+        $plugins->hooks["global_end"][10]["styleUsernames_getModerators"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->getModerators();'));
+        $plugins->hooks["pre_output_page"][10]["styleUsernames_parseUsernames"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->parseUsernames($arg);'));
+        $plugins->hooks["build_forumbits_forum"][10]["styleUsernames_buildForumbits"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->buildForumbits($arg);'));
+        $plugins->hooks["forumdisplay_announcement"][10]["styleUsernames_forumdisplayAnnouncement"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->forumdisplayAnnouncement();'));
+        $plugins->hooks["forumdisplay_thread"][10]["styleUsernames_forumdisplayThread"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->forumdisplayThread();'));
+        $plugins->hooks["search_results_thread"][10]["styleUsernames_searchThread"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->searchThread();'));
+        $plugins->hooks["search_results_post"][10]["styleUsernames_searchPost"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->searchPost();'));
+        $plugins->hooks["pre_output_page"][10]["styleUsernames_pluginThanks"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->pluginThanks($arg);'));
+    }
+>>>>>>> parent of e65e44c... Version 1.1.0
 
     /**
      * Change moderators usernames to Style Usernames code and get their ids.
@@ -233,7 +252,7 @@ class styleUsernames
      */
     public static function parseUsernames(&$content) {
         global $db, $cache;
-                           
+
         // Parse users
         self::$cache['users'] = array_unique(self::$cache['users']);
         self::$cache['guests'] = array_unique(self::$cache['guests']);
@@ -291,7 +310,129 @@ class styleUsernames
             }
         }
     }
+<<<<<<< HEAD
  
+=======
+
+    /**
+     * Style usernames on forums list
+     * 
+     * @param array &$forum Reference to forum data
+     */
+    public function buildForumbits(&$forum)
+    {
+        if ($forum['lastposteruid'] != 0)
+        {
+            $this->cache['users'][$forum['lastposteruid']] = $forum['lastposter'];
+            $forum['lastposter'] = "#STYLE_USERNAMES_UID{$forum['lastposteruid']}#";
+        }
+        else
+        {
+            $this->cache['guests'][] = $forum['lastposter'];
+            $forum['lastposter'] = "#STYLE_USERNAMES_UID{$forum['lastposter']}#";
+        }
+    }
+
+    /**
+     * Style usernames on announcements list
+     */
+    public function forumdisplayAnnouncement()
+    {
+        global $announcement;
+
+        $this->cache['users'][$announcement['uid']] = $announcement['username'];
+        $sign = ">#STYLE_USERNAMES_UID{$announcement['uid']}#<";
+        $announcement['profilelink'] = str_replace(">{$announcement['username']}<", $sign, $announcement['profilelink']);
+    }
+
+    /**
+     * Style usernames on topics list
+     */
+    public function forumdisplayThread()
+    {
+        global $thread;
+        
+        if ($thread['username'])
+        {
+            $this->cache['users'][$thread['uid']] = $thread['username'];
+            $thread['username'] = "#STYLE_USERNAMES_UID{$thread['uid']}#";
+        }
+        else
+        {
+            $this->cache['guests'][] = $thread['threadusername'];
+            $thread['username'] = "#STYLE_USERNAMES_UID{$thread['threadusername']}#";
+        }
+
+        if ($thread['lastposteruid'] != 0)
+        {
+            $this->cache['users'][$thread['lastposteruid']] = $thread['lastposter'];
+            $thread['lastposter'] = "#STYLE_USERNAMES_UID{$thread['lastposteruid']}#";
+        }
+        else
+        {
+            $this->cache['guests'][] = $thread['lastposter'];
+            $thread['lastposter'] = "#STYLE_USERNAMES_UID{$thread['lastposter']}#";
+        }
+    }
+
+    /**
+     * Style usernames on topics list (search results)
+     */
+    public function searchThread()
+    {
+        global $thread, $lastposterlink;
+
+        if ($thread['username'])
+        {
+            if ($thread['uid'] != 0)
+            {
+                $this->cache['users'][$thread['uid']] = $thread['username'];
+                $sign = ">#STYLE_USERNAMES_UID{$thread['uid']}#<";
+                $thread['profilelink'] = str_replace(">{$thread['username']}<", $sign, $thread['profilelink']);
+            }
+            else
+            {
+                $this->cache['guests'][] = $thread['username'];
+                $thread['profilelink'] = "#STYLE_USERNAMES_UID{$thread['username']}#";
+            }
+
+        }
+
+
+        if ($thread['lastposteruid'] != 0)
+        {
+            $this->cache['users'][$thread['lastposteruid']] = $thread['lastposter'];
+            $sign = ">#STYLE_USERNAMES_UID{$thread['lastposteruid']}#<";
+            $lastposterlink = str_replace(">{$thread['lastposter']}<", $sign, $lastposterlink);
+        }
+        else
+        {
+            $this->cache['guests'][] = $thread['lastposter'];
+            $lastposterlink = "#STYLE_USERNAMES_UID{$thread['lastposter']}#";
+        }
+    }
+
+    /**
+     * Style usernames on posts list (search results)
+     */
+    public function searchPost()
+    {
+        global $post;
+
+        if ($post['uid'])
+        {
+            $this->cache['users'][$post['uid']] = $post['username'];
+            $sign = ">#STYLE_USERNAMES_UID{$post['uid']}#<";
+            $post['profilelink'] = str_replace(">{$post['username']}<", $sign, $post['profilelink']);
+        }
+        else
+        {
+            $this->cache['guests'][] = $post['username'];
+            $post['profilelink'] = "#STYLE_USERNAMES_UID{$post['username']}#"; 
+        }
+    }
+    
+>>>>>>> parent of e65e44c... Version 1.1.0
     /**
      * Say thanks to plugin author - paste link to author website.
      * Please don't remove this code if you didn't make donate
@@ -301,8 +442,14 @@ class styleUsernames
     {
         global $session, $lukasamd_thanks;
         
+<<<<<<< HEAD
         if (!isset($lukasamd_thanks) && $session->is_spider) {
             $thx = '<div style="margin:auto; text-align:center;">This forum uses <a href="https://lukasztkacz.com">Lukasz Tkacz</a> MyBB addons.</div></body>';
+=======
+        if (!isset($lukasamd_thanks) && $session->is_spider)
+        {
+            $thx = '<div style="margin:auto; text-align:center;">This forum uses <a href="http://lukasztkacz.com">Lukasz Tkacz</a> MyBB addons.</div></body>';
+>>>>>>> parent of e65e44c... Version 1.1.0
             $content = str_replace('</body>', $thx, $content);
             $lukasamd_thanks = true;
         }

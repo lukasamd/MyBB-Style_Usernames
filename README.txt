@@ -1,4 +1,5 @@
 This plugin colorize usernames according to the groups settings.
+<<<<<<< HEAD
 It can format nicknames in:
 
 * moderators list
@@ -10,3 +11,6 @@ It can format nicknames in:
 * last posts author in search results
 * announcements author
 * etc
+=======
+It's very similar to "Username Styles" plugin, but it's faster and compatible for MyBB 1.6.
+>>>>>>> parent of e65e44c... Version 1.1.0
