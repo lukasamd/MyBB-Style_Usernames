@@ -50,9 +50,9 @@ function styleUsernames_info()
     return Array(
         'name' => $lang->styleUsernamesName,
         'description' => $lang->styleUsernamesDesc,
-        'website' => 'http://lukasztkacz.com',
+        'website' => 'https://tkacz.pro',
         'author' => 'Lukasz "LukasAMD" Tkacz',
-        'authorsite' => 'https://lukasztkacz.com',
+        'authorsite' => 'https://tkacz.pro',
         'version' => '1.3.0',
         'guid' => '',
         'compatibility' => '18*',
