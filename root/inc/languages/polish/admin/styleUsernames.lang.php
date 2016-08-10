@@ -18,5 +18,5 @@
  *
  */
 
-$l['styleUsernamesName'] = 'Kolorowe nicki (MyBB 1.6)';
+$l['styleUsernamesName'] = 'Kolorowe nicki (MyBB 1.8)';
 $l['styleUsernamesDesc'] = 'Ten plugin koloryzuje nicki wyświetlane na forum zgodnie z ustawieniami grup.';

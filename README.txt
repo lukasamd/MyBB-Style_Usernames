@@ -1,3 +1,5 @@
+# Style Usernames for MyBB
+
 This plugin colorize usernames according to the groups settings.
 It can format nicknames in:
 
@@ -9,3 +11,7 @@ It can format nicknames in:
 * topic author in search results
 * last posts author in search results
 * announcements author
+
+## Donate
+
+This plugin add link to author website (only for web spiders). If you do not want this, do not use plugin, or make donate and contact author.

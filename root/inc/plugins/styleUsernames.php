@@ -53,7 +53,7 @@ function styleUsernames_info()
         'website' => 'https://tkacz.pro',
         'author' => 'Lukasz "LukasAMD" Tkacz',
         'authorsite' => 'https://tkacz.pro',
-        'version' => '1.3.0',
+        'version' => '1.4.0',
         'guid' => '',
         'compatibility' => '18*',
         'codename' => 'style_usernames'
@@ -147,8 +147,12 @@ class styleUsernames
             $result = $db->simple_select('users', 'uid, username, usergroup, displaygroup', 'uid IN (' . implode(',', array_keys($this->cache['users'])) . ')');
             while ($row = $db->fetch_array($result))
             {
+                $sign = "#STYLE_USERNAMES_UID{$row['uid']}#"; 
                 $username = format_name($row['username'], $row['usergroup'], $row['displaygroup']);
-                $sign = "#STYLE_USERNAMES_UID{$row['uid']}#";
+
+                if (THIS_SCRIPT === 'private.php') {
+                    $username = build_profile_link($username, $row['uid']);
+                }
 
                 // Delete old code - only for moderators (fix for images in usergroup style)
                 if (in_array($row['uid'], $this->cache['mods']))
