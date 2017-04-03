@@ -20,28 +20,28 @@
 
 /**
  * Disallow direct access to this file for security reasons
- * 
+ *
  */
 if (!defined("IN_MYBB")) exit;
 
 /**
  * Create plugin object
- * 
+ *
  */
 $plugins->objects['styleUsernames'] = new styleUsernames();
 
 /**
  * Standard MyBB info function
- * 
+ *
  */
 function styleUsernames_info()
 {
     global $lang;
 
     $lang->load("styleUsernames");
-    
+
     $lang->styleUsernamesDesc = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post" style="float:right;">' .
-        '<input type="hidden" name="cmd" value="_s-xclick">' . 
+        '<input type="hidden" name="cmd" value="_s-xclick">' .
         '<input type="hidden" name="hosted_button_id" value="3BTVZBUG6TMFQ">' .
         '<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">' .
         '<img alt="" border="0" src="https://www.paypalobjects.com/pl_PL/i/scr/pixel.gif" width="1" height="1">' .
@@ -53,7 +53,7 @@ function styleUsernames_info()
         'website' => 'https://tkacz.pro',
         'author' => 'Lukasz "LukasAMD" Tkacz',
         'authorsite' => 'https://tkacz.pro',
-        'version' => '1.4.0',
+        'version' => '1.5.0',
         'guid' => '',
         'compatibility' => '18*',
         'codename' => 'style_usernames'
@@ -91,7 +91,7 @@ class styleUsernames
         $plugins->hooks["portal_announcement"][10]["styleUsernames_portalAnnouncement"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->portalAnnouncement();'));
         $plugins->hooks["pre_output_page"][10]["styleUsernames_pluginThanks"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->pluginThanks($arg);'));
     }
-    
+
 
     /**
      * Change moderators usernames to Style Usernames code and get their ids.
@@ -100,26 +100,20 @@ class styleUsernames
     {
         global $cache;
 
-        if (empty($cache->cache['moderators']))
-        {
+        if (empty($cache->cache['moderators'])) {
             $cache->cache['moderators'] = $cache->read("moderators");
         }
 
-        foreach ($cache->cache['moderators'] as $fid => $fdata)
-        {
-            if (isset($fdata['usergroups']))
-            {
-                foreach ($fdata['usergroups'] as $gid => $gdata)
-                {
+        foreach ($cache->cache['moderators'] as $fid => $fdata) {
+            if (isset($fdata['usergroups'])) {
+                foreach ($fdata['usergroups'] as $gid => $gdata) {
                     $cache->cache['moderators'][$fid]['usergroups'][$gid]['title'] = "#STYLE_USERNAMES_GID{$gid}#";
                     $this->cache['groups'][] = $gid;
                 }
             }
 
-            if (isset($fdata['users']))
-            {
-                foreach ($fdata['users'] as $uid => $udata)
-                {
+            if (isset($fdata['users'])) {
+                foreach ($fdata['users'] as $uid => $udata) {
                     $cache->cache['moderators'][$fid]['users'][$uid]['username'] = "#STYLE_USERNAMES_UID{$uid}#";
                     $this->cache['users'][$uid] = $udata['username'];
                     $this->cache['mods'][] = $uid;
@@ -130,24 +124,22 @@ class styleUsernames
 
     /**
      * Parse all usernames using build-in uids cache - modify output code
-     * 
-     * @param string &$content Reference to output code    
+     *
+     * @param string &$content Reference to output code
      */
     public function parseUsernames(&$content)
     {
         global $db, $cache;
-                           
+
         // Parse users
-        $this->cache['users'] = array_unique($this->cache['users']);
         $this->cache['guests'] = array_unique($this->cache['guests']);
         $this->cache['mods'] = array_unique($this->cache['mods']);
+        $usersKeys = array_unique(array_keys($this->cache['users']));
 
-        if (sizeof($this->cache['users']))
-        {
-            $result = $db->simple_select('users', 'uid, username, usergroup, displaygroup', 'uid IN (' . implode(',', array_keys($this->cache['users'])) . ')');
-            while ($row = $db->fetch_array($result))
-            {
-                $sign = "#STYLE_USERNAMES_UID{$row['uid']}#"; 
+        if (!empty($usersKeys)) {
+            $result = $db->simple_select('users', 'uid, username, usergroup, displaygroup', 'uid IN (' . implode(',', $usersKeys) . ')');
+            while ($row = $db->fetch_array($result)) {
+                $sign = "#STYLE_USERNAMES_UID{$row['uid']}#";
                 $username = format_name($row['username'], $row['usergroup'], $row['displaygroup']);
 
                 if (THIS_SCRIPT === 'private.php') {
@@ -155,11 +147,9 @@ class styleUsernames
                 }
 
                 // Delete old code - only for moderators (fix for images in usergroup style)
-                if (in_array($row['uid'], $this->cache['mods']))
-                {
+                if (in_array($row['uid'], $this->cache['mods'])) {
                     $old_username = str_replace('{username}', $sign, $cache->cache['usergroups'][$row['usergroup']]['namestyle']);
-                    if ($old_username != '')
-                    {
+                    if ($old_username != '') {
                         $content = str_replace($old_username, $sign, $content);
                     }
                 }
@@ -169,38 +159,30 @@ class styleUsernames
             }
 
             // Clean output for bad (non-isset) usernames
-            if (isset($fdata['users']))
-            {
-                foreach ($fdata['users'] as $uid => $udata)
-                {
-                    $cache->cache['moderators'][$fid]['users'][$uid]['username'] = "#STYLE_USERNAMES_UID{$uid}#";
-                    $this->cache['users'][$uid] = $udata['username'];
-                    $this->cache['mods'][] = $uid;
+            if (!empty($this->cache['users'])) {
+                foreach ($this->cache['users'] as $uid => $username) {
+                    $old_username = "#STYLE_USERNAMES_UID{$uid}#";
+                    $content = str_replace($old_username, $username, $content);
                 }
             }
         }
-        
+
         // Parse guests
-        if (sizeof($this->cache['guests']))
-        {
-            foreach ($this->cache['guests'] as $username)
-            {
+        if (sizeof($this->cache['guests'])) {
+            foreach ($this->cache['guests'] as $username) {
                 $sign = "#STYLE_USERNAMES_UID{$username}#";
                 $username = format_name($username, 1, 1);
                 $content = str_replace($sign, $username, $content);
             }
         }
-        
+
 
         // Parse moderator groups
         $this->cache['groups'] = array_unique($this->cache['groups']);
 
-        if (sizeof($this->cache['groups']))
-        {
-            foreach ($cache->cache['usergroups'] as $gid => $gdata)
-            {
-                if (!in_array($gid, $this->cache['groups']))
-                {
+        if (sizeof($this->cache['groups'])) {
+            foreach ($cache->cache['usergroups'] as $gid => $gdata) {
+                if (!in_array($gid, $this->cache['groups'])) {
                     continue;
                 }
                 $title = format_name($gdata['title'], $gid);
@@ -212,18 +194,15 @@ class styleUsernames
 
     /**
      * Style usernames on forums list
-     * 
+     *
      * @param array &$forum Reference to forum data
      */
     public function buildForumbits(&$forum)
     {
-        if ($forum['lastposteruid'] != 0)
-        {
+        if ($forum['lastposteruid'] != 0) {
             $this->cache['users'][$forum['lastposteruid']] = $forum['lastposter'];
             $forum['lastposter'] = "#STYLE_USERNAMES_UID{$forum['lastposteruid']}#";
-        }
-        else
-        {
+        } else {
             $this->cache['guests'][] = $forum['lastposter'];
             $forum['lastposter'] = "#STYLE_USERNAMES_UID{$forum['lastposter']}#";
         }
@@ -247,25 +226,19 @@ class styleUsernames
     public function forumdisplayThread()
     {
         global $thread;
-        
-        if ($thread['username'])
-        {
+
+        if ($thread['username']) {
             $this->cache['users'][$thread['uid']] = $thread['username'];
             $thread['username'] = "#STYLE_USERNAMES_UID{$thread['uid']}#";
-        }
-        else
-        {
+        } else {
             $this->cache['guests'][] = $thread['threadusername'];
             $thread['username'] = "#STYLE_USERNAMES_UID{$thread['threadusername']}#";
         }
 
-        if ($thread['lastposteruid'] != 0)
-        {
+        if ($thread['lastposteruid'] != 0) {
             $this->cache['users'][$thread['lastposteruid']] = $thread['lastposter'];
             $thread['lastposter'] = "#STYLE_USERNAMES_UID{$thread['lastposteruid']}#";
-        }
-        else
-        {
+        } else {
             $this->cache['guests'][] = $thread['lastposter'];
             $thread['lastposter'] = "#STYLE_USERNAMES_UID{$thread['lastposter']}#";
         }
@@ -278,16 +251,12 @@ class styleUsernames
     {
         global $thread, $lastposterlink;
 
-        if ($thread['username'])
-        {
-            if ($thread['uid'] != 0)
-            {
+        if ($thread['username']) {
+            if ($thread['uid'] != 0) {
                 $this->cache['users'][$thread['uid']] = $thread['username'];
                 $sign = ">#STYLE_USERNAMES_UID{$thread['uid']}#<";
                 $thread['profilelink'] = str_replace(">{$thread['username']}<", $sign, $thread['profilelink']);
-            }
-            else
-            {
+            } else {
                 $this->cache['guests'][] = $thread['username'];
                 $thread['profilelink'] = "#STYLE_USERNAMES_UID{$thread['username']}#";
             }
@@ -295,14 +264,11 @@ class styleUsernames
         }
 
 
-        if ($thread['lastposteruid'] != 0)
-        {
+        if ($thread['lastposteruid'] != 0) {
             $this->cache['users'][$thread['lastposteruid']] = $thread['lastposter'];
             $sign = ">#STYLE_USERNAMES_UID{$thread['lastposteruid']}#<";
             $lastposterlink = str_replace(">{$thread['lastposter']}<", $sign, $lastposterlink);
-        }
-        else
-        {
+        } else {
             $this->cache['guests'][] = $thread['lastposter'];
             $lastposterlink = "#STYLE_USERNAMES_UID{$thread['lastposter']}#";
         }
@@ -315,62 +281,56 @@ class styleUsernames
     {
         global $post;
 
-        if ($post['uid'])
-        {
+        if ($post['uid']) {
             $this->cache['users'][$post['uid']] = $post['username'];
             $sign = ">#STYLE_USERNAMES_UID{$post['uid']}#<";
             $post['profilelink'] = str_replace(">{$post['username']}<", $sign, $post['profilelink']);
-        }
-        else
-        {
+        } else {
             $this->cache['guests'][] = $post['username'];
-            $post['profilelink'] = "#STYLE_USERNAMES_UID{$post['username']}#"; 
+            $post['profilelink'] = "#STYLE_USERNAMES_UID{$post['username']}#";
         }
     }
-    
+
     /**
      * Style usernames on PM lists
      */
     public function privateMessage()
     {
         global $tofromusername, $tofromuid;
-        
-        if ($tofromuid != 0)
-        {
+
+        if ($tofromuid != 0) {
             $this->cache['users'][$tofromuid] = $tofromusername;
             $tofromusername = "#STYLE_USERNAMES_UID{$tofromuid}#";
         }
     }
-    
+
     /**
-     * Style usernames on portal announcements 
+     * Style usernames on portal announcements
      */
     public function portalAnnouncement()
     {
         global $profilelink, $announcement;
-        
-        if ($announcement['uid'])
-        {
+
+        if ($announcement['uid']) {
             $this->cache['users'][$announcement['uid']] = $announcement['username'];
             $profilelink = "#STYLE_USERNAMES_UID{$announcement['uid']}#";
         }
-    } 
-    
+    }
+
     /**
      * Say thanks to plugin author - paste link to author website.
      * Please don't remove this code if you didn't make donate
-     * It's the only way to say thanks without donate :)     
+     * It's the only way to say thanks without donate :)
      */
     public function pluginThanks(&$content)
     {
         global $session, $lukasamd_thanks;
-        
-        if (!isset($lukasamd_thanks) && $session->is_spider)
-        {
+
+        if (!isset($lukasamd_thanks) && $session->is_spider) {
             $thx = '<div style="margin:auto; text-align:center;">This forum uses <a href="https://lukasztkacz.com">Lukasz Tkacz</a> MyBB addons.</div></body>';
             $content = str_replace('</body>', $thx, $content);
             $lukasamd_thanks = true;
         }
     }
-    
+
 }
