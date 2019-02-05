@@ -1,3 +1,12 @@
+# Plugin is abandoned
+I decided to stop developling MyBB addons. You can find details here:
+https://github.com/lukasamd/MyBB-View_Unread_posts/issues/25
+
+---
+
+
+
+
 # Style Usernames for MyBB
 
 This plugin colorize usernames according to the groups settings.
