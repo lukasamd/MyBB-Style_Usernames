@@ -32,4 +32,11 @@ INSTALACJA:
 2. Wejdź do Panelu Administracyjnego -> Pluginy i zainstaluj "Kolorowe nicki"
 
 
+AKTUALIZACJA:
+
+
+1. Umieść wszystkie pliki z katalogu root na serwerze w katalogu z forum MyBB
+
+2. W wersji 2.x nie jest wymagana migracja bazy ani odświeżanie ustawień
+
 

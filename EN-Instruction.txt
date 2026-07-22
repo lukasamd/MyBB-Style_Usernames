@@ -17,7 +17,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- */ 
+ */
 
 #############################################
 
@@ -30,3 +30,11 @@ INSTALLATION:
 1. Upload all files from "root" directory to your mybb installation on the server
 
 2. Go to ACP -> Plugins and activate "Style Usernames" plugin
+
+
+UPDATE:
+
+
+1. Upload all files from "root" directory to your MyBB installation on the server
+
+2. No database migration or settings refresh is required for version 2.x

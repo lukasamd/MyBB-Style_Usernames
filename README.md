@@ -1,15 +1,6 @@
-# Plugin is abandoned
-I decided to stop developling MyBB addons. You can find details here:
-https://github.com/lukasamd/MyBB-View_Unread_posts/issues/25
-
----
-
-
-
-
 # Style Usernames for MyBB
 
-This plugin colorize usernames according to the groups settings.
+This plugin colorizes usernames according to the group name style settings.
 It can format nicknames in:
 
 * moderators list
@@ -21,6 +12,6 @@ It can format nicknames in:
 * last posts author in search results
 * announcements author
 
-## Donate
+## Compatibility
 
-This plugin add link to author website (only for web spiders). If you do not want this, do not use plugin, or make donate and contact author.
+Version 2.x targets current MyBB 1.8.x releases and PHP 8.x. It removes the legacy `create_function()` hooks, escapes usernames before applying group styles, and removes the old spider-only author link injection.

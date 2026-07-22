@@ -1,3 +1,13 @@
+Version 2.0.0
+    * replace create_function() hooks for PHP 8 compatibility
+    * escape usernames before applying group name styles
+    * use per-request internal tokens instead of username-based placeholders
+    * harden moderator and usergroup cache handling
+    * remove spider-only author link injection
+    * update documentation for current MyBB 1.8.x releases
+
+
+
 Version 1.4.0
     * fix PM links
 

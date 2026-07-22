@@ -18,27 +18,30 @@
  *
  */
 
-/**
- * Disallow direct access to this file for security reasons
- *
- */
-if (!defined("IN_MYBB")) exit;
+if (!defined('IN_MYBB')) {
+    exit;
+}
 
-/**
- * Create plugin object
- *
- */
-$plugins->objects['styleUsernames'] = new styleUsernames();
+$plugins->add_hook('pre_output_page', array('styleUsernames', 'parseUsernames'));
+$plugins->add_hook('global_end', array('styleUsernames', 'getModerators'));
+$plugins->add_hook('build_forumbits_forum', array('styleUsernames', 'buildForumbits'));
+$plugins->add_hook('forumdisplay_announcement', array('styleUsernames', 'forumdisplayAnnouncement'));
+$plugins->add_hook('forumdisplay_thread', array('styleUsernames', 'forumdisplayThread'));
+$plugins->add_hook('search_results_thread', array('styleUsernames', 'searchThread'));
+$plugins->add_hook('search_results_post', array('styleUsernames', 'searchPost'));
+$plugins->add_hook('private_message', array('styleUsernames', 'privateMessage'));
+$plugins->add_hook('portal_announcement', array('styleUsernames', 'portalAnnouncement'));
 
 /**
  * Standard MyBB info function
  *
+ * @return array
  */
 function styleUsernames_info()
 {
     global $lang;
 
-    $lang->load("styleUsernames");
+    $lang->load('styleUsernames');
 
     $lang->styleUsernamesDesc = '<form action="https://www.paypal.com/cgi-bin/webscr" method="post" style="float:right;">' .
         '<input type="hidden" name="cmd" value="_s-xclick">' .
@@ -47,13 +50,13 @@ function styleUsernames_info()
         '<img alt="" border="0" src="https://www.paypalobjects.com/pl_PL/i/scr/pixel.gif" width="1" height="1">' .
         '</form>' . $lang->styleUsernamesDesc;
 
-    return Array(
+    return array(
         'name' => $lang->styleUsernamesName,
         'description' => $lang->styleUsernamesDesc,
         'website' => 'https://tkacz.pro',
         'author' => 'Lukasz "LukasAMD" Tkacz',
         'authorsite' => 'https://tkacz.pro',
-        'version' => '1.5.0',
+        'version' => '2.0.0',
         'guid' => '',
         'compatibility' => '18*',
         'codename' => 'style_usernames'
@@ -61,276 +64,329 @@ function styleUsernames_info()
 }
 
 /**
- * Plugin Class
+ * Styles selected usernames that MyBB 1.8 still renders without group styles.
  */
 class styleUsernames
 {
-
-    private $cache = array(
-        'groups' => array(),
-        'mods' => array(),
-        'users' => array(),
-        'guests' => array(),
-    );
-
-    /**
-     * Constructor - add plugin hooks
-     */
-    public function __construct()
-    {
-        global $plugins;
-
-        $plugins->hooks["pre_output_page"][10]["styleUsernames_parseUsernames"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->parseUsernames($arg);'));
-        $plugins->hooks["global_end"][10]["styleUsernames_getModerators"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->getModerators();'));
-        $plugins->hooks["build_forumbits_forum"][10]["styleUsernames_buildForumbits"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->buildForumbits($arg);'));
-        $plugins->hooks["forumdisplay_announcement"][10]["styleUsernames_forumdisplayAnnouncement"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->forumdisplayAnnouncement();'));
-        $plugins->hooks["forumdisplay_thread"][10]["styleUsernames_forumdisplayThread"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->forumdisplayThread();'));
-        $plugins->hooks["search_results_thread"][10]["styleUsernames_searchThread"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->searchThread();'));
-        $plugins->hooks["search_results_post"][10]["styleUsernames_searchPost"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->searchPost();'));
-        $plugins->hooks["private_message"][10]["styleUsernames_privateMessage"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->privateMessage();'));
-        $plugins->hooks["portal_announcement"][10]["styleUsernames_portalAnnouncement"] = array("function" => create_function('', 'global $plugins; $plugins->objects[\'styleUsernames\']->portalAnnouncement();'));
-        $plugins->hooks["pre_output_page"][10]["styleUsernames_pluginThanks"] = array("function" => create_function('&$arg', 'global $plugins; $plugins->objects[\'styleUsernames\']->pluginThanks($arg);'));
-    }
-
+    private static $users = array();
+    private static $userTokens = array();
+    private static $guestTokens = array();
+    private static $groups = array();
+    private static $mods = array();
+    private static $tokenSalt = '';
+    private static $guestTokenCounter = 0;
 
     /**
-     * Change moderators usernames to Style Usernames code and get their ids.
+     * Change moderators usernames to Style Usernames tokens and collect ids.
      */
-    public function getModerators()
+    public static function getModerators(&$unused = null)
     {
         global $cache;
 
-        if (empty($cache->cache['moderators'])) {
-            $cache->cache['moderators'] = $cache->read("moderators");
+        if (empty($cache->cache['moderators']) || !is_array($cache->cache['moderators'])) {
+            $moderators = $cache->read('moderators');
+            $cache->cache['moderators'] = is_array($moderators) ? $moderators : array();
         }
 
         foreach ($cache->cache['moderators'] as $fid => $fdata) {
-            if (isset($fdata['usergroups'])) {
+            if (!empty($fdata['usergroups']) && is_array($fdata['usergroups'])) {
                 foreach ($fdata['usergroups'] as $gid => $gdata) {
-                    $cache->cache['moderators'][$fid]['usergroups'][$gid]['title'] = "#STYLE_USERNAMES_GID{$gid}#";
-                    $this->cache['groups'][] = $gid;
+                    $gid = (int)$gid;
+                    if ($gid <= 0) {
+                        continue;
+                    }
+
+                    $cache->cache['moderators'][$fid]['usergroups'][$gid]['title'] = self::groupToken($gid);
+                    self::$groups[$gid] = $gid;
                 }
             }
 
-            if (isset($fdata['users'])) {
+            if (!empty($fdata['users']) && is_array($fdata['users'])) {
                 foreach ($fdata['users'] as $uid => $udata) {
-                    $cache->cache['moderators'][$fid]['users'][$uid]['username'] = "#STYLE_USERNAMES_UID{$uid}#";
-                    $this->cache['users'][$uid] = $udata['username'];
-                    $this->cache['mods'][] = $uid;
+                    $uid = (int)$uid;
+                    if ($uid <= 0) {
+                        continue;
+                    }
+
+                    $username = isset($udata['username']) ? $udata['username'] : '';
+                    $cache->cache['moderators'][$fid]['users'][$uid]['username'] = self::userToken($uid, $username);
+                    self::$mods[$uid] = $uid;
                 }
             }
         }
     }
 
     /**
-     * Parse all usernames using build-in uids cache - modify output code
+     * Parse all generated tokens after templates have been rendered.
      *
      * @param string &$content Reference to output code
      */
-    public function parseUsernames(&$content)
+    public static function parseUsernames(&$content)
     {
-        global $db, $cache;
+        global $db;
 
-        // Parse users
-        $this->cache['guests'] = array_unique($this->cache['guests']);
-        $this->cache['mods'] = array_unique($this->cache['mods']);
-        $usersKeys = array_unique(array_keys($this->cache['users']));
+        if (!is_string($content)) {
+            return;
+        }
 
-        if (!empty($usersKeys)) {
-            $result = $db->simple_select('users', 'uid, username, usergroup, displaygroup', 'uid IN (' . implode(',', $usersKeys) . ')');
-            while ($row = $db->fetch_array($result)) {
-                $sign = "#STYLE_USERNAMES_UID{$row['uid']}#";
-                $username = format_name($row['username'], $row['usergroup'], $row['displaygroup']);
+        if (!empty(self::$users)) {
+            $uids = array_map('intval', array_keys(self::$users));
+            $uids = array_filter(array_unique($uids));
 
-                if (THIS_SCRIPT === 'private.php') {
-                    $username = build_profile_link($username, $row['uid']);
-                }
+            if (!empty($uids)) {
+                $query = $db->simple_select(
+                    'users',
+                    'uid, username, usergroup, displaygroup',
+                    'uid IN (' . implode(',', $uids) . ')'
+                );
 
-                // Delete old code - only for moderators (fix for images in usergroup style)
-                if (in_array($row['uid'], $this->cache['mods'])) {
-                    $old_username = str_replace('{username}', $sign, $cache->cache['usergroups'][$row['usergroup']]['namestyle']);
-                    if ($old_username != '') {
-                        $content = str_replace($old_username, $sign, $content);
+                while ($row = $db->fetch_array($query)) {
+                    $uid = (int)$row['uid'];
+                    if (!isset(self::$userTokens[$uid])) {
+                        continue;
                     }
+
+                    $token = self::$userTokens[$uid];
+                    $username = self::formatUsername($row['username'], $row['usergroup'], $row['displaygroup']);
+
+                    if (isset(self::$mods[$uid])) {
+                        $wrappedToken = format_name($token, (int)$row['usergroup'], (int)$row['displaygroup']);
+                        if ($wrappedToken !== $token) {
+                            $content = str_replace($wrappedToken, $token, $content);
+                        }
+                    }
+
+                    $content = str_replace($token, $username, $content);
+                    unset(self::$users[$uid]);
                 }
-
-                $content = str_replace($sign, $username, $content);
-                unset($this->cache['users'][$row['uid']]);
             }
 
-            // Clean output for bad (non-isset) usernames
-            if (!empty($this->cache['users'])) {
-                foreach ($this->cache['users'] as $uid => $username) {
-                    $old_username = "#STYLE_USERNAMES_UID{$uid}#";
-                    $content = str_replace($old_username, $username, $content);
-                }
-            }
-        }
-
-        // Parse guests
-        if (sizeof($this->cache['guests'])) {
-            foreach ($this->cache['guests'] as $username) {
-                $sign = "#STYLE_USERNAMES_UID{$username}#";
-                $username = format_name($username, 1, 1);
-                $content = str_replace($sign, $username, $content);
-            }
-        }
-
-
-        // Parse moderator groups
-        $this->cache['groups'] = array_unique($this->cache['groups']);
-
-        if (sizeof($this->cache['groups'])) {
-            foreach ($cache->cache['usergroups'] as $gid => $gdata) {
-                if (!in_array($gid, $this->cache['groups'])) {
+            foreach (self::$users as $uid => $username) {
+                if (!isset(self::$userTokens[$uid])) {
                     continue;
                 }
-                $title = format_name($gdata['title'], $gid);
-                $sign = "#STYLE_USERNAMES_GID{$gid}#";
-                $content = str_replace($sign, $title, $content);
+
+                $content = str_replace(self::$userTokens[$uid], htmlspecialchars_uni($username), $content);
+            }
+        }
+
+        foreach (self::$guestTokens as $token => $username) {
+            $content = str_replace($token, self::formatUsername($username, 1, 1), $content);
+        }
+
+        if (!empty(self::$groups)) {
+            foreach (self::getUsergroups() as $gid => $gdata) {
+                $gid = (int)$gid;
+                if (!isset(self::$groups[$gid]) || !isset($gdata['title'])) {
+                    continue;
+                }
+
+                $content = str_replace(self::groupToken($gid), self::formatUsername($gdata['title'], $gid), $content);
             }
         }
     }
 
     /**
-     * Style usernames on forums list
+     * Style usernames on forums list.
      *
      * @param array &$forum Reference to forum data
+     * @return array
      */
-    public function buildForumbits(&$forum)
+    public static function buildForumbits(&$forum)
     {
-        if ($forum['lastposteruid'] != 0) {
-            $this->cache['users'][$forum['lastposteruid']] = $forum['lastposter'];
-            $forum['lastposter'] = "#STYLE_USERNAMES_UID{$forum['lastposteruid']}#";
-        } else {
-            $this->cache['guests'][] = $forum['lastposter'];
-            $forum['lastposter'] = "#STYLE_USERNAMES_UID{$forum['lastposter']}#";
+        if (!is_array($forum)) {
+            return $forum;
         }
+
+        $lastposteruid = isset($forum['lastposteruid']) ? (int)$forum['lastposteruid'] : 0;
+        $lastposter = isset($forum['lastposter']) ? $forum['lastposter'] : '';
+
+        if ($lastposteruid > 0) {
+            $forum['lastposter'] = self::userToken($lastposteruid, $lastposter);
+        } elseif ($lastposter !== '') {
+            $forum['lastposter'] = self::guestToken($lastposter);
+        }
+
+        return $forum;
     }
 
     /**
-     * Style usernames on announcements list
+     * Style usernames on announcements list.
      */
-    public function forumdisplayAnnouncement()
+    public static function forumdisplayAnnouncement(&$unused = null)
     {
         global $announcement;
 
-        $this->cache['users'][$announcement['uid']] = $announcement['username'];
-        $sign = ">#STYLE_USERNAMES_UID{$announcement['uid']}#<";
-        $announcement['profilelink'] = str_replace(">{$announcement['username']}<", $sign, $announcement['profilelink']);
+        if (empty($announcement) || !is_array($announcement)) {
+            return;
+        }
+
+        $uid = isset($announcement['uid']) ? (int)$announcement['uid'] : 0;
+        if ($uid > 0) {
+            $announcement['profilelink'] = build_profile_link(
+                self::userToken($uid, isset($announcement['username']) ? $announcement['username'] : ''),
+                $uid
+            );
+        }
     }
 
     /**
-     * Style usernames on topics list
+     * Style usernames on topics list.
      */
-    public function forumdisplayThread()
+    public static function forumdisplayThread(&$unused = null)
     {
         global $thread;
 
-        if ($thread['username']) {
-            $this->cache['users'][$thread['uid']] = $thread['username'];
-            $thread['username'] = "#STYLE_USERNAMES_UID{$thread['uid']}#";
-        } else {
-            $this->cache['guests'][] = $thread['threadusername'];
-            $thread['username'] = "#STYLE_USERNAMES_UID{$thread['threadusername']}#";
+        if (empty($thread) || !is_array($thread)) {
+            return;
         }
 
-        if ($thread['lastposteruid'] != 0) {
-            $this->cache['users'][$thread['lastposteruid']] = $thread['lastposter'];
-            $thread['lastposter'] = "#STYLE_USERNAMES_UID{$thread['lastposteruid']}#";
-        } else {
-            $this->cache['guests'][] = $thread['lastposter'];
-            $thread['lastposter'] = "#STYLE_USERNAMES_UID{$thread['lastposter']}#";
+        if (!empty($thread['username']) && !empty($thread['uid'])) {
+            $thread['username'] = self::userToken((int)$thread['uid'], $thread['username']);
+        } elseif (!empty($thread['threadusername'])) {
+            $thread['username'] = self::guestToken($thread['threadusername']);
+        }
+
+        $lastposteruid = isset($thread['lastposteruid']) ? (int)$thread['lastposteruid'] : 0;
+        $lastposter = isset($thread['lastposter']) ? $thread['lastposter'] : '';
+
+        if ($lastposteruid > 0) {
+            $thread['lastposter'] = self::userToken($lastposteruid, $lastposter);
+        } elseif ($lastposter !== '') {
+            $thread['lastposter'] = self::guestToken($lastposter);
         }
     }
 
     /**
-     * Style usernames on topics list (search results)
+     * Style usernames on topics list (search results).
      */
-    public function searchThread()
+    public static function searchThread(&$unused = null)
     {
         global $thread, $lastposterlink;
 
-        if ($thread['username']) {
-            if ($thread['uid'] != 0) {
-                $this->cache['users'][$thread['uid']] = $thread['username'];
-                $sign = ">#STYLE_USERNAMES_UID{$thread['uid']}#<";
-                $thread['profilelink'] = str_replace(">{$thread['username']}<", $sign, $thread['profilelink']);
-            } else {
-                $this->cache['guests'][] = $thread['username'];
-                $thread['profilelink'] = "#STYLE_USERNAMES_UID{$thread['username']}#";
-            }
-
+        if (empty($thread) || !is_array($thread)) {
+            return;
         }
 
+        $uid = isset($thread['uid']) ? (int)$thread['uid'] : 0;
+        if (!empty($thread['username']) && $uid > 0) {
+            $thread['profilelink'] = build_profile_link(self::userToken($uid, $thread['username']), $uid);
+        } elseif (!empty($thread['username'])) {
+            $thread['profilelink'] = self::guestToken($thread['username']);
+        }
 
-        if ($thread['lastposteruid'] != 0) {
-            $this->cache['users'][$thread['lastposteruid']] = $thread['lastposter'];
-            $sign = ">#STYLE_USERNAMES_UID{$thread['lastposteruid']}#<";
-            $lastposterlink = str_replace(">{$thread['lastposter']}<", $sign, $lastposterlink);
-        } else {
-            $this->cache['guests'][] = $thread['lastposter'];
-            $lastposterlink = "#STYLE_USERNAMES_UID{$thread['lastposter']}#";
+        $lastposteruid = isset($thread['lastposteruid']) ? (int)$thread['lastposteruid'] : 0;
+        $lastposter = isset($thread['lastposter']) ? $thread['lastposter'] : '';
+        if ($lastposteruid > 0) {
+            $lastposterlink = build_profile_link(self::userToken($lastposteruid, $lastposter), $lastposteruid);
+        } elseif ($lastposter !== '') {
+            $lastposterlink = self::guestToken($lastposter);
         }
     }
 
     /**
-     * Style usernames on posts list (search results)
+     * Style usernames on posts list (search results).
      */
-    public function searchPost()
+    public static function searchPost(&$unused = null)
     {
         global $post;
 
-        if ($post['uid']) {
-            $this->cache['users'][$post['uid']] = $post['username'];
-            $sign = ">#STYLE_USERNAMES_UID{$post['uid']}#<";
-            $post['profilelink'] = str_replace(">{$post['username']}<", $sign, $post['profilelink']);
-        } else {
-            $this->cache['guests'][] = $post['username'];
-            $post['profilelink'] = "#STYLE_USERNAMES_UID{$post['username']}#";
+        if (empty($post) || !is_array($post)) {
+            return;
+        }
+
+        $uid = isset($post['uid']) ? (int)$post['uid'] : 0;
+        if ($uid > 0) {
+            $post['profilelink'] = build_profile_link(
+                self::userToken($uid, isset($post['username']) ? $post['username'] : ''),
+                $uid
+            );
+        } elseif (!empty($post['username'])) {
+            $post['profilelink'] = self::guestToken($post['username']);
         }
     }
 
     /**
-     * Style usernames on PM lists
+     * Style usernames on PM lists.
      */
-    public function privateMessage()
+    public static function privateMessage(&$unused = null)
     {
         global $tofromusername, $tofromuid;
 
-        if ($tofromuid != 0) {
-            $this->cache['users'][$tofromuid] = $tofromusername;
-            $tofromusername = "#STYLE_USERNAMES_UID{$tofromuid}#";
+        $uid = isset($tofromuid) ? (int)$tofromuid : 0;
+        if ($uid > 0) {
+            $tofromusername = build_profile_link(self::userToken($uid, $tofromusername), $uid);
         }
     }
 
     /**
-     * Style usernames on portal announcements
+     * Style usernames on portal announcements.
      */
-    public function portalAnnouncement()
+    public static function portalAnnouncement(&$unused = null)
     {
         global $profilelink, $announcement;
 
-        if ($announcement['uid']) {
-            $this->cache['users'][$announcement['uid']] = $announcement['username'];
-            $profilelink = "#STYLE_USERNAMES_UID{$announcement['uid']}#";
+        if (empty($announcement) || !is_array($announcement)) {
+            return;
+        }
+
+        $uid = isset($announcement['uid']) ? (int)$announcement['uid'] : 0;
+        if ($uid > 0) {
+            $profilelink = build_profile_link(
+                self::userToken($uid, isset($announcement['username']) ? $announcement['username'] : ''),
+                $uid
+            );
         }
     }
 
-    /**
-     * Say thanks to plugin author - paste link to author website.
-     * Please don't remove this code if you didn't make donate
-     * It's the only way to say thanks without donate :)
-     */
-    public function pluginThanks(&$content)
+    private static function userToken($uid, $username = '')
     {
-        global $session, $lukasamd_thanks;
+        $uid = (int)$uid;
+        self::$users[$uid] = $username;
 
-        if (!isset($lukasamd_thanks) && $session->is_spider) {
-            $thx = '<div style="margin:auto; text-align:center;">This forum uses <a href="https://lukasztkacz.com">Lukasz Tkacz</a> MyBB addons.</div></body>';
-            $content = str_replace('</body>', $thx, $content);
-            $lukasamd_thanks = true;
+        if (!isset(self::$userTokens[$uid])) {
+            self::$userTokens[$uid] = self::tokenPrefix() . '_USER_' . $uid . '_';
         }
+
+        return self::$userTokens[$uid];
     }
 
+    private static function guestToken($username)
+    {
+        $token = self::tokenPrefix() . '_GUEST_' . (++self::$guestTokenCounter) . '_';
+        self::$guestTokens[$token] = $username;
+
+        return $token;
+    }
+
+    private static function groupToken($gid)
+    {
+        return self::tokenPrefix() . '_GROUP_' . (int)$gid . '_';
+    }
+
+    private static function tokenPrefix()
+    {
+        if (self::$tokenSalt === '') {
+            self::$tokenSalt = 'STYLEUSERNAMES_' . md5(uniqid('', true));
+        }
+
+        return self::$tokenSalt;
+    }
+
+    private static function formatUsername($username, $usergroup, $displaygroup = 0)
+    {
+        return format_name(htmlspecialchars_uni($username), (int)$usergroup, (int)$displaygroup);
+    }
+
+    private static function getUsergroups()
+    {
+        global $cache;
+
+        if (empty($cache->cache['usergroups']) || !is_array($cache->cache['usergroups'])) {
+            $usergroups = $cache->read('usergroups');
+            $cache->cache['usergroups'] = is_array($usergroups) ? $usergroups : array();
+        }
+
+        return $cache->cache['usergroups'];
+    }
 }
